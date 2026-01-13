@@ -1215,23 +1215,26 @@
         <div className="coffee-section">
             <span className="coffee-text"> Enjoying the app?</span>
             <div className="coffee-buttons">
-                {connectedWallet && (
-                    <>
-                        <button className="coffee-btn" onClick={() => sendTip(0.1)}>
-                            0.1 SOL
-                        </button>
-                        <button className="coffee-btn" onClick={() => sendTip(0.5)}>
-                            0.5 SOL
-                        </button>
-                        <button className="coffee-btn" onClick={() => sendTip(1)}>
-                            1 SOL
-                        </button>
-                    </>
-                )}
-                <button className="coffee-btn qr-btn" onClick={() => setShowQRModal(true)}>
-                    ☕ Buy me a coffee
-                </button>
-            </div>
+    {connectedWallet && (
+        <>
+            <button className="coffee-btn" onClick={() => sendTip(0.01)}>
+                0.01 SOL
+            </button>
+            <button className="coffee-btn" onClick={() => sendTip(0.1)}>
+                0.1 SOL
+            </button>
+            <button className="coffee-btn" onClick={() => sendTip(0.5)}>
+                0.5 SOL
+            </button>
+            <button className="coffee-btn" onClick={() => sendCustomTip()}>
+                💎 Custom
+            </button>
+        </>
+    )}
+    <button className="coffee-btn qr-btn" onClick={() => setShowQRModal(true)}>
+        ☕ Buy me a coffee
+    </button>
+</div>
         </div>
     </div>
 </footer>
