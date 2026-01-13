@@ -717,31 +717,78 @@
         }
 
         /* Responsive */
-        @media (max-width: 768px) {
-            .logo {
-                font-size: 2rem;
-            }
+@media (max-width: 768px) {
+    .logo {
+        font-size: 2rem;
+    }
 
-            .connection-buttons {
-                grid-template-columns: 1fr;
-            }
+    .connection-buttons {
+        grid-template-columns: 1fr;
+    }
 
-            .airdrops-grid {
-                grid-template-columns: 1fr;
-            }
+    .airdrops-grid {
+        grid-template-columns: 1fr;
+    }
 
-            .footer-content {
-                flex-direction: column;
-                text-align: center;
-            }
+    /* FOOTER OPTIMISÉ POUR MOBILE */
+    .footer {
+        padding: 15px 10px; /* Réduit le padding */
+    }
 
-            .coffee-section {
-                flex-direction: column;
-            }
+    .footer-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px; /* Réduit l'espace */
+    }
 
-            .modal {
-                padding: 25px;
-            }
+    .coffee-section {
+        flex-direction: column;
+        gap: 10px; /* Réduit l'espace */
+        width: 100%;
+    }
+
+    .coffee-text {
+        font-size: 0.8rem; /* Plus petit sur mobile */
+    }
+
+    .coffee-buttons {
+        flex-wrap: wrap; /* Permet le retour à la ligne */
+        justify-content: center;
+        gap: 8px; /* Réduit l'espace entre boutons */
+    }
+
+    .coffee-btn {
+        padding: 8px 15px; /* Boutons plus compacts */
+        font-size: 0.75rem; /* Texte plus petit */
+        flex: 0 1 auto; /* Permet taille flexible */
+    }
+
+    .qr-btn {
+        width: 100%; /* QR code prend toute la largeur */
+        margin-top: 5px;
+    }
+
+    .modal {
+        padding: 25px;
+        margin: 10px; /* Ajoute une marge sur mobile */
+    }
+}
+
+/* MOBILE TRÈS PETIT (iPhone SE, etc.) */
+@media (max-width: 380px) {
+    .coffee-btn {
+        padding: 6px 12px;
+        font-size: 0.7rem;
+    }
+
+    .coffee-text {
+        font-size: 0.75rem;
+    }
+
+    .footer {
+        padding: 12px 8px;
+    }
+}
         }
     </style>
 </head>
