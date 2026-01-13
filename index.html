@@ -1378,28 +1378,9 @@ const sendCustomTip = () => {
        function QRModal({ onClose }) {
     const snsAddress = "cryptoric89.skr";
     const walletAddress = "BeX9myYpxHRA6x3wqriiA7e83yqbp4pCQFWHPQf1MW4a";
-    const canvasRef = React.useRef(null);
     
-    // Générer le QR code quand le modal s'ouvre
-    React.useEffect(() => {
-        if (canvasRef.current && window.QRCode) {
-            QRCode.toCanvas(
-                canvasRef.current,
-                walletAddress,
-                {
-                    width: 200,
-                    margin: 2,
-                    color: {
-                        dark: '#0a0a0f',
-                        light: '#ffffff'
-                    }
-                },
-                (error) => {
-                    if (error) console.error('QR Code error:', error);
-                }
-            );
-        }
-    }, []);
+    // Générer l'URL du QR code via API
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(walletAddress)}`;
     
     const copySNS = () => {
         navigator.clipboard.writeText(snsAddress);
@@ -1424,7 +1405,20 @@ const sendCustomTip = () => {
                         marginBottom: '20px',
                         display: 'inline-block'
                     }}>
-                        <canvas ref={canvasRef} style={{display: 'block'}}></canvas>
+                        <img 
+                            src={qrCodeUrl} 
+                            alt="QR Code"
+                            style={{
+                                display: 'block',
+                                width: '200px',
+                                height: '200px',
+                                borderRadius: '8px'
+                            }}
+                            onError={(e) => {
+                                console.error('QR Code failed to load');
+                                e.target.style.display = 'none';
+                            }}
+                        />
                     </div>
 
                     {/* SNS Address */}
