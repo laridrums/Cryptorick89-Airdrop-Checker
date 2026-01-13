@@ -957,83 +957,50 @@
             };
 
             const sendTip = async (amount) => {
-    // Vérifications améliorées
     if (!connectedWallet) {
         alert('Please connect your wallet first');
         return;
     }
 
-    if (!window.solana || !window.solana.isConnected) {
-        alert('Wallet not properly connected. Please reconnect.');
-        return;
-    }
-
     try {
-        console.log('Starting tip transaction...');
-        console.log('From:', connectedWallet.address);
-        console.log('Amount:', amount, 'SOL');
-
+        // HELIUS RPC (gratuit et plus fiable)
         const connection = new solanaWeb3.Connection(
-            'https://api.mainnet-beta.solana.com',
-            { commitment: 'confirmed' }
+            'https://mainnet.helius-rpc.com/?api-key=28166a77-28f8-40f8-a33e-a810059c01eb',
+            'confirmed'
         );
 
-        // Vérifier le solde
         const fromPubkey = new solanaWeb3.PublicKey(connectedWallet.address);
-        const balance = await connection.getBalance(fromPubkey);
-        const balanceInSol = balance / solanaWeb3.LAMPORTS_PER_SOL;
-        
-        console.log('Current balance:', balanceInSol, 'SOL');
-
-        if (balanceInSol < amount + 0.001) { // +0.001 pour les frais
-            alert(`Insufficient balance. You need at least ${amount + 0.001} SOL`);
-            return;
-        }
+        const toPubkey = new solanaWeb3.PublicKey('BeX9myYpxHRA6x3wqriiA7e83yqbp4pCQFWHPQf1MW4a');
 
         // Créer la transaction
         const transaction = new solanaWeb3.Transaction().add(
             solanaWeb3.SystemProgram.transfer({
                 fromPubkey: fromPubkey,
-                toPubkey: new solanaWeb3.PublicKey('BeX9myYpxHRA6x3wqriiA7e83yqbp4pCQFWHPQf1MW4a'),
+                toPubkey: toPubkey,
                 lamports: amount * solanaWeb3.LAMPORTS_PER_SOL
             })
         );
 
-        // Obtenir le blockhash récent
+        // Obtenir un blockhash récent
         const { blockhash } = await connection.getLatestBlockhash('finalized');
         transaction.recentBlockhash = blockhash;
         transaction.feePayer = fromPubkey;
 
-        console.log('Transaction created, waiting for signature...');
+        console.log('Sending transaction...');
 
-        // Signer et envoyer
-        const signedTransaction = await window.solana.signTransaction(transaction);
-        const signature = await connection.sendRawTransaction(signedTransaction.serialize());
+        // Signer et envoyer via Phantom
+        const { signature } = await window.solana.signAndSendTransaction(transaction);
 
         console.log('Transaction sent:', signature);
-        console.log('Waiting for confirmation...');
 
-        // Attendre la confirmation
+        // Attendre confirmation
         await connection.confirmTransaction(signature, 'confirmed');
 
-        alert(`✅ Thank you! Transaction confirmed: ${signature.slice(0, 8)}...`);
-        
-        // Optionnel : ouvrir dans Solscan
-        window.open(`https://solscan.io/tx/${signature}`, '_blank');
+        alert(`✅ Thank you! Transaction: ${signature.slice(0, 8)}...`);
 
     } catch (error) {
         console.error('Error sending tip:', error);
-        
-        // Messages d'erreur plus clairs
-        if (error.message.includes('User rejected')) {
-            alert('Transaction cancelled by user.');
-        } else if (error.message.includes('insufficient')) {
-            alert('Insufficient SOL balance.');
-        } else if (error.message.includes('blockhash')) {
-            alert('Network error. Please try again.');
-        } else {
-            alert(`Failed to send tip: ${error.message}`);
-        }
+        alert('Failed to send tip: ' + error.message);
     }
 };
 
