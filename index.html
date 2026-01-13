@@ -1374,58 +1374,115 @@ const sendCustomTip = () => {
             );
         }
 
-        function QRModal({ onClose }) {
-            const address = "cryptoric89.skr";
-            
-            const copyAddress = () => {
-                navigator.clipboard.writeText(address);
-                alert('Address copied to clipboard!');
-            };
+       function QRModal({ onClose }) {
+    const snsAddress = "cryptoric89.skr";
+    const walletAddress = "BeX9myYpxHRA6x3wqriiA7e83yqbp4pCQFWHPQf1MW4a";
+    
+    const copySNS = () => {
+        navigator.clipboard.writeText(snsAddress);
+        alert('✅ SNS address copied!');
+    };
 
-            return (
-                <div className="modal-overlay" onClick={onClose}>
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
-                        <h2 className="modal-header">Send a Tip</h2>
-                        <div style={{textAlign: 'center'}}>
-                            <div style={{
-                                background: 'white',
-                                padding: '20px',
-                                borderRadius: '16px',
-                                marginBottom: '20px',
-                                display: 'inline-block'
-                            }}>
-                                <div style={{
-                                    width: '200px',
-                                    height: '200px',
-                                    background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                                    borderRadius: '12px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '3rem'
-                                }}>
-                                    📱
-                                </div>
-                            </div>
-                            <div style={{
-                                background: 'var(--dark-lighter)',
-                                padding: '15px',
-                                borderRadius: '12px',
-                                marginBottom: '20px',
-                                wordBreak: 'break-all',
-                                fontFamily: 'JetBrains Mono',
-                                fontSize: '0.9rem'
-                            }}>
-                                {address}
-                            </div>
-                            <button className="submit-btn" onClick={copyAddress} style={{width: '100%'}}>
-                                Copy Address
-                            </button>
+    const copyWallet = () => {
+        navigator.clipboard.writeText(walletAddress);
+        alert('✅ Wallet address copied!');
+    };
+
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+                <h2 className="modal-header">Send a Tip</h2>
+                <div style={{textAlign: 'center'}}>
+                    {/* QR Code */}
+                    <div style={{
+                        background: 'white',
+                        padding: '20px',
+                        borderRadius: '16px',
+                        marginBottom: '20px',
+                        display: 'inline-block'
+                    }}>
+                        <div style={{
+                            width: '200px',
+                            height: '200px',
+                            background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                            borderRadius: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '3rem'
+                        }}>
+                            📱
                         </div>
                     </div>
+
+                    {/* SNS Address */}
+                    <div style={{marginBottom: '20px'}}>
+                        <div style={{
+                            fontSize: '0.8rem',
+                            color: 'var(--text-muted)',
+                            marginBottom: '8px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '1px'
+                        }}>
+                            SNS Domain
+                        </div>
+                        <div style={{
+                            background: 'var(--dark-lighter)',
+                            padding: '15px',
+                            borderRadius: '12px',
+                            marginBottom: '10px',
+                            fontFamily: 'JetBrains Mono',
+                            fontSize: '1rem',
+                            fontWeight: '600',
+                            color: 'var(--primary)'
+                        }}>
+                            {snsAddress}
+                        </div>
+                        <button 
+                            className="submit-btn" 
+                            onClick={copySNS} 
+                            style={{width: '100%', padding: '12px'}}
+                        >
+                            📋 Copy SNS
+                        </button>
+                    </div>
+
+                    {/* Wallet Address */}
+                    <div>
+                        <div style={{
+                            fontSize: '0.8rem',
+                            color: 'var(--text-muted)',
+                            marginBottom: '8px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '1px'
+                        }}>
+                            Wallet Address
+                        </div>
+                        <div style={{
+                            background: 'var(--dark-lighter)',
+                            padding: '15px',
+                            borderRadius: '12px',
+                            marginBottom: '10px',
+                            wordBreak: 'break-all',
+                            fontFamily: 'JetBrains Mono',
+                            fontSize: '0.85rem',
+                            color: 'var(--text)'
+                        }}>
+                            {walletAddress}
+                        </div>
+                        <button 
+                            className="submit-btn" 
+                            onClick={copyWallet} 
+                            style={{width: '100%', padding: '12px'}}
+                        >
+                            📋 Copy Wallet Address
+                        </button>
+                    </div>
                 </div>
-            );
-        }
+            </div>
+        </div>
+    );
+}
 
         ReactDOM.render(<App />, document.getElementById('root'));
     </script>
