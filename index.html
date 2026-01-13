@@ -10,6 +10,7 @@
     <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet">
@@ -1377,6 +1378,28 @@ const sendCustomTip = () => {
        function QRModal({ onClose }) {
     const snsAddress = "cryptoric89.skr";
     const walletAddress = "BeX9myYpxHRA6x3wqriiA7e83yqbp4pCQFWHPQf1MW4a";
+    const canvasRef = React.useRef(null);
+    
+    // Générer le QR code quand le modal s'ouvre
+    React.useEffect(() => {
+        if (canvasRef.current && window.QRCode) {
+            QRCode.toCanvas(
+                canvasRef.current,
+                walletAddress,
+                {
+                    width: 200,
+                    margin: 2,
+                    color: {
+                        dark: '#0a0a0f',
+                        light: '#ffffff'
+                    }
+                },
+                (error) => {
+                    if (error) console.error('QR Code error:', error);
+                }
+            );
+        }
+    }, []);
     
     const copySNS = () => {
         navigator.clipboard.writeText(snsAddress);
@@ -1401,18 +1424,7 @@ const sendCustomTip = () => {
                         marginBottom: '20px',
                         display: 'inline-block'
                     }}>
-                        <div style={{
-                            width: '200px',
-                            height: '200px',
-                            background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                            borderRadius: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '3rem'
-                        }}>
-                            📱
-                        </div>
+                        <canvas ref={canvasRef} style={{display: 'block'}}></canvas>
                     </div>
 
                     {/* SNS Address */}
