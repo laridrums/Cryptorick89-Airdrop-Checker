@@ -8,6 +8,8 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet">
@@ -741,17 +743,6 @@
                 padding: 25px;
             }
         }
-
-        /* Success Message */
-        .success-message {
-            background: rgba(20, 241, 149, 0.2);
-            border: 1px solid var(--success);
-            color: var(--success);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            font-size: 0.9rem;
-        }
     </style>
 </head>
 <body>
@@ -760,21 +751,48 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // Mock Airdrop Data - Replace with Supabase in production
-        const [airdrops, setAirdrops] = useState([]);
+        // Configuration Supabase - REMPLACER avec vos vraies valeurs
+        const SUPABASE_URL = 'https://gbraoqvyhrchkngmqbkk.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_q3NBOPu98GJuZ2Hs-wsnew_nZRAk6qH';
+        const supabase = supabase ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
-useEffect(() => {
-  loadAirdrops();
-}, []);
+        // Initialiser EmailJS
+        emailjs.init('PxzH8kE8rlp0EfDsk');
 
-async function loadAirdrops() {
-  const { data, error } = await supabase
-    .from('airdrops')
-    .select('*')
-    .order('created_at', { ascending: false });
-  
-  if (data) setAirdrops(data);
-}
+        // Mock Airdrop Data - utilisé si Supabase n'est pas configuré
+        const mockAirdrops = [
+            {
+                id: 1,
+                project_name: "Jupiter",
+                description: "Leading DEX aggregator on Solana. Check your JUP allocation.",
+                logo: "🪐",
+                status: "active",
+                claim_url: "https://jup.ag/airdrop",
+                website_url: "https://jup.ag",
+                twitter_url: "https://twitter.com/JupiterExchange",
+                discord_url: "https://discord.gg/jup"
+            },
+            {
+                id: 2,
+                project_name: "Jito",
+                description: "MEV infrastructure for Solana. Rewards for stakers and validators.",
+                logo: "⚡",
+                status: "active",
+                claim_url: "https://jito.network/airdrop",
+                website_url: "https://jito.network",
+                twitter_url: "https://twitter.com/jito_sol"
+            },
+            {
+                id: 3,
+                project_name: "Marginfi",
+                description: "DeFi lending protocol on Solana. Early users eligible.",
+                logo: "📊",
+                status: "active",
+                claim_url: "https://app.marginfi.com",
+                website_url: "https://marginfi.com",
+                twitter_url: "https://twitter.com/marginfi"
+            }
+        ];
 
         function App() {
             const [connectedWallet, setConnectedWallet] = useState(null);
@@ -785,6 +803,31 @@ async function loadAirdrops() {
             const [showQRModal, setShowQRModal] = useState(false);
             const [loading, setLoading] = useState(false);
             const [eligibilityResults, setEligibilityResults] = useState({});
+
+            // Charger les airdrops depuis Supabase
+            useEffect(() => {
+                loadAirdrops();
+            }, []);
+
+            const loadAirdrops = async () => {
+                if (!supabase) {
+                    console.log('Using mock data - Supabase not configured');
+                    return;
+                }
+
+                try {
+                    const { data, error } = await supabase
+                        .from('airdrops')
+                        .select('*')
+                        .order('created_at', { ascending: false });
+                    
+                    if (data && data.length > 0) {
+                        setAirdrops(data);
+                    }
+                } catch (error) {
+                    console.error('Error loading airdrops:', error);
+                }
+            };
 
             // Connect Seeker Wallet
             const connectSeeker = async () => {
@@ -844,17 +887,14 @@ async function loadAirdrops() {
                 setEligibilityResults({});
             };
 
-            // Mock Eligibility Check - Replace with real logic
+            // Mock Eligibility Check
             const checkEligibility = async (address) => {
                 setLoading(true);
                 
-                // Simulate API call
                 await new Promise(resolve => setTimeout(resolve, 1500));
 
-                // Mock results - In production, check real on-chain data
                 const results = {};
                 airdrops.forEach(airdrop => {
-                    // Random eligibility for demo
                     const random = Math.random();
                     if (airdrop.status === 'upcoming') {
                         results[airdrop.id] = 'pending';
@@ -881,7 +921,7 @@ async function loadAirdrops() {
                     const transaction = new solanaWeb3.Transaction().add(
                         solanaWeb3.SystemProgram.transfer({
                             fromPubkey: new solanaWeb3.PublicKey(connectedWallet.address),
-                            toPubkey: new solanaWeb3.PublicKey(BeX9myYpxHRA6x3wqriiA7e83yqbp4pCQFWHPQf1MW4a),
+                            toPubkey: new solanaWeb3.PublicKey('BeX9myYpxHRA6x3wqriiA7e83yqbp4pCQFWHPQf1MW4a'),
                             lamports: amount * solanaWeb3.LAMPORTS_PER_SOL
                         })
                     );
@@ -896,22 +936,18 @@ async function loadAirdrops() {
 
             return (
                 <>
-                    {/* Animated Background */}
                     <div className="background-container">
                         <div className="grid-overlay"></div>
                         <div className="orb orb-1"></div>
                         <div className="orb orb-2"></div>
                     </div>
 
-                    {/* Main App */}
                     <div className="app-container">
-                        {/* Header */}
                         <header className="header">
                             <h1 className="logo">AIRDROP CHECKER</h1>
                             <p className="tagline">Discover your Solana airdrop eligibility</p>
                         </header>
 
-                        {/* Connection Section */}
                         <section className="connection-section">
                             <h2 className="connection-title">Connect & Check</h2>
                             
@@ -958,7 +994,6 @@ async function loadAirdrops() {
                             )}
                         </section>
 
-                        {/* Airdrops Section */}
                         <section className="airdrops-section">
                             <div className="section-header">
                                 <h2 className="section-title">Available Airdrops</h2>
@@ -971,11 +1006,6 @@ async function loadAirdrops() {
                                 <div className="loading">
                                     <div className="spinner"></div>
                                     <p>Checking eligibility...</p>
-                                </div>
-                            ) : airdrops.length === 0 ? (
-                                <div className="empty-state">
-                                    <div className="empty-icon">🔍</div>
-                                    <p>No airdrops available at the moment</p>
                                 </div>
                             ) : (
                                 <div className="airdrops-grid">
@@ -1045,17 +1075,14 @@ async function loadAirdrops() {
                         </section>
                     </div>
 
-                    {/* Suggest Modal */}
                     {showSuggestModal && (
                         <SuggestModal onClose={() => setShowSuggestModal(false)} />
                     )}
 
-                    {/* QR Modal */}
                     {showQRModal && (
                         <QRModal onClose={() => setShowQRModal(false)} />
                     )}
 
-                    {/* Footer */}
                     <footer className="footer">
                         <div className="footer-content">
                             <div className="coffee-section">
@@ -1088,7 +1115,6 @@ async function loadAirdrops() {
             );
         }
 
-        // Suggest Modal Component
         function SuggestModal({ onClose }) {
             const [formData, setFormData] = useState({
                 projectName: '',
@@ -1098,42 +1124,42 @@ async function loadAirdrops() {
                 criteria: ''
             });
 
-            // APRÈS (avec EmailJS activé) :
-const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    try {
-        // 1. Sauvegarder dans Supabase
-        await supabase.from('airdrop_suggestions').insert([{
-            project_name: formData.projectName,
-            description: formData.description,
-            official_link: formData.officialLink,
-            user_email: formData.email,
-            criteria_notes: formData.criteria
-        }]);
-        
-        // 2. Envoyer email de notification
-        await emailjs.send(
-            service_zyp8xav,      // ← Remplace ici
-            template_jo7beih,     // ← Remplace ici
-            {
-                project_name: formData.projectName,
-                description: formData.description,
-                official_link: formData.officialLink,
-                user_email: formData.email,
-                criteria_notes: formData.criteria,
-                to_email: lari.drums@gmail.com  // ← Ton email pour recevoir les notifications
-            },
-            PxzH8kE8rlp0EfDsk        // ← Remplace ici
-        );
-        
-        alert('✅ Merci ! Votre suggestion a été envoyée.');
-        onClose();
-    } catch (error) {
-        console.error('Erreur:', error);
-        alert('❌ Erreur lors de l\'envoi.');
-    }
-};
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                
+                try {
+                    // Sauvegarder dans Supabase si configuré
+                    if (supabase) {
+                        await supabase.from('airdrop_suggestions').insert([{
+                            project_name: formData.projectName,
+                            description: formData.description,
+                            official_link: formData.officialLink,
+                            user_email: formData.email,
+                            criteria_notes: formData.criteria
+                        }]);
+                    }
+                    
+                    // Envoyer email de notification
+                    await emailjs.send(
+                        'service_zyp8xav',
+                        'template_jo7beih',
+                        {
+                            project_name: formData.projectName,
+                            description: formData.description,
+                            official_link: formData.officialLink,
+                            user_email: formData.email || 'Non fourni',
+                            criteria_notes: formData.criteria || 'Non spécifié',
+                            to_email: 'lari.drums@gmail.com'
+                        }
+                    );
+                    
+                    alert('✅ Merci ! Votre suggestion a été envoyée.');
+                    onClose();
+                } catch (error) {
+                    console.error('Erreur:', error);
+                    alert('⚠️ Suggestion enregistrée mais erreur d\'envoi email.');
+                }
+            };
 
             return (
                 <div className="modal-overlay" onClick={onClose}>
@@ -1196,7 +1222,6 @@ const handleSubmit = async (e) => {
             );
         }
 
-        // QR Modal Component
         function QRModal({ onClose }) {
             const address = "cryptoric89.skr";
             
@@ -1217,7 +1242,6 @@ const handleSubmit = async (e) => {
                                 marginBottom: '20px',
                                 display: 'inline-block'
                             }}>
-                                {/* QR Code placeholder - In production, use a QR code library */}
                                 <div style={{
                                     width: '200px',
                                     height: '200px',
@@ -1251,7 +1275,6 @@ const handleSubmit = async (e) => {
             );
         }
 
-        // Render App
         ReactDOM.render(<App />, document.getElementById('root'));
     </script>
 </body>
