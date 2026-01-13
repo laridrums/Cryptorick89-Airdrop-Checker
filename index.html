@@ -1014,7 +1014,13 @@
                                         return (
                                             <div key={airdrop.id} className="airdrop-card">
                                                 <div className="airdrop-header">
-                                                    <div className="airdrop-logo">{airdrop.logo}</div>
+                                                    <div className="airdrop-logo">
+    {airdrop.logo.startsWith('http') ? (
+        <img src={airdrop.logo} alt={airdrop.project_name} style={{width: '100%', height: '100%', objectFit: 'contain'}} />
+    ) : (
+        airdrop.logo
+    )}
+</div>
                                                     <div className="airdrop-info">
                                                         <h3 className="airdrop-name">{airdrop.project_name}</h3>
                                                         <span className={`airdrop-status status-${airdrop.status}`}>
