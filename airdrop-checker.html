@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solana Airdrop Checker</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #14F195;
+            --secondary: #9945FF;
+            --accent: #00D4AA;
+            --dark: #0a0a0f;
+            --dark-card: #14141f;
+            --dark-lighter: #1a1a2e;
+            --text: #ffffff;
+            --text-muted: #a0a0b8;
+            --success: #14F195;
+            --error: #FF4D6D;
+            --warning: #FFB84D;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--dark);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .grid-overlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(var(--secondary) 1px, transparent 1px),
+                linear-gradient(90deg, var(--secondary) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.03;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.15;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: var(--primary);
+            top: -100px;
+            right: -100px;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 300px;
+            height: 300px;
+            background: var(--secondary);
+            bottom: -50px;
+            left: -50px;
+            animation-delay: 2s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, 30px) scale(1.1); }
+        }
+
+        /* Main Container */
+        .app-container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-bottom: 120px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            letter-spacing: -2px;
+        }
+
+        .tagline {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 300;
+        }
+
+        /* Connection Section */
+        .connection-section {
+            background: var(--dark-card);
+            border: 1px solid rgba(148, 69, 255, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 0 40px rgba(148, 69, 255, 0.1);
+        }
+
+        .connection-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+
+        .connection-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .wallet-btn {
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            border: none;
+            padding: 15px 20px;
+            border-radius: 12px;
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .wallet-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(148, 69, 255, 0.4);
+        }
+
+        .wallet-btn.seeker {
+            background: linear-gradient(135deg, #00D4AA, #14F195);
+        }
+
+        .wallet-btn.phantom {
+            background: linear-gradient(135deg, #AB9FF2, #9945FF);
+        }
+
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            position: relative;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+
+        .manual-input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .manual-input {
+            flex: 1;
+            background: var(--dark-lighter);
+            border: 1px solid rgba(148, 69, 255, 0.3);
+            padding: 15px;
+            border-radius: 12px;
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        .manual-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .check-btn {
+            background: var(--primary);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            color: var(--dark);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .check-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(20, 241, 149, 0.5);
+        }
+
+        .connected-wallet {
+            background: rgba(20, 241, 149, 0.1);
+            border: 1px solid var(--primary);
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .wallet-address {
+            font-size: 0.85rem;
+            color: var(--primary);
+        }
+
+        .disconnect-btn {
+            background: rgba(255, 77, 109, 0.2);
+            border: 1px solid var(--error);
+            color: var(--error);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .disconnect-btn:hover {
+            background: var(--error);
+            color: white;
+        }
+
+        /* Airdrops Grid */
+        .airdrops-section {
+            margin-bottom: 40px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            color: var(--text);
+        }
+
+        .suggest-btn {
+            background: rgba(148, 69, 255, 0.2);
+            border: 1px solid var(--secondary);
+            color: var(--secondary);
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .suggest-btn:hover {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .airdrops-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .airdrop-card {
+            background: var(--dark-card);
+            border: 1px solid rgba(148, 69, 255, 0.2);
+            border-radius: 16px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .airdrop-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .airdrop-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 40px rgba(20, 241, 149, 0.2);
+        }
+
+        .airdrop-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .airdrop-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .airdrop-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: var(--dark-lighter);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .airdrop-info {
+            flex: 1;
+        }
+
+        .airdrop-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .airdrop-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: rgba(20, 241, 149, 0.2);
+            color: var(--success);
+        }
+
+        .status-upcoming {
+            background: rgba(255, 184, 77, 0.2);
+            color: var(--warning);
+        }
+
+        .status-ended {
+            background: rgba(160, 160, 184, 0.2);
+            color: var(--text-muted);
+        }
+
+        .airdrop-description {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .eligibility-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .eligible {
+            background: rgba(20, 241, 149, 0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .not-eligible {
+            background: rgba(255, 77, 109, 0.2);
+            color: var(--error);
+            border: 1px solid var(--error);
+        }
+
+        .pending {
+            background: rgba(255, 184, 77, 0.2);
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+
+        .airdrop-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+        }
+
+        .claim-btn {
+            background: var(--primary);
+            color: var(--dark);
+        }
+
+        .claim-btn:hover {
+            box-shadow: 0 0 20px rgba(20, 241, 149, 0.5);
+            transform: scale(1.02);
+        }
+
+        .claim-btn:disabled {
+            background: rgba(160, 160, 184, 0.2);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        .learn-btn {
+            background: rgba(148, 69, 255, 0.2);
+            color: var(--secondary);
+            border: 1px solid var(--secondary);
+        }
+
+        .learn-btn:hover {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 10px;
+        }
+
+        .social-btn {
+            padding: 8px 12px;
+            background: var(--dark-lighter);
+            border: 1px solid rgba(148, 69, 255, 0.2);
+            border-radius: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.8rem;
+        }
+
+        .social-btn:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal {
+            background: var(--dark-card);
+            border: 1px solid rgba(148, 69, 255, 0.3);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+            color: var(--primary);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            background: var(--dark-lighter);
+            border: 1px solid rgba(148, 69, 255, 0.3);
+            padding: 12px;
+            border-radius: 10px;
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .submit-btn,
+        .cancel-btn {
+            flex: 1;
+            padding: 15px;
+            border-radius: 12px;
+            border: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .submit-btn {
+            background: var(--primary);
+            color: var(--dark);
+        }
+
+        .submit-btn:hover {
+            box-shadow: 0 0 30px rgba(20, 241, 149, 0.5);
+        }
+
+        .cancel-btn {
+            background: rgba(255, 77, 109, 0.2);
+            color: var(--error);
+            border: 1px solid var(--error);
+        }
+
+        .cancel-btn:hover {
+            background: var(--error);
+            color: white;
+        }
+
+        /* Footer */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--dark-card);
+            border-top: 1px solid rgba(148, 69, 255, 0.3);
+            padding: 20px;
+            z-index: 100;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .coffee-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .coffee-text {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .coffee-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .coffee-btn {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            color: var(--dark);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+        }
+
+        .coffee-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(20, 241, 149, 0.5);
+        }
+
+        .qr-btn {
+            background: rgba(148, 69, 255, 0.2);
+            border: 1px solid var(--secondary);
+            color: var(--secondary);
+        }
+
+        .qr-btn:hover {
+            background: var(--secondary);
+            color: white;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(148, 69, 255, 0.2);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 2rem;
+            }
+
+            .connection-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .airdrops-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .coffee-section {
+                flex-direction: column;
+            }
+
+            .modal {
+                padding: 25px;
+            }
+        }
+
+        /* Success Message */
+        .success-message {
+            background: rgba(20, 241, 149, 0.2);
+            border: 1px solid var(--success);
+            color: var(--success);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Mock Airdrop Data - Replace with Supabase in production
+        const [airdrops, setAirdrops] = useState([]);
+
+useEffect(() => {
+  loadAirdrops();
+}, []);
+
+async function loadAirdrops() {
+  const { data, error } = await supabase
+    .from('airdrops')
+    .select('*')
+    .order('created_at', { ascending: false });
+  
+  if (data) setAirdrops(data);
+}
+
+        function App() {
+            const [connectedWallet, setConnectedWallet] = useState(null);
+            const [manualAddress, setManualAddress] = useState('');
+            const [activeAddress, setActiveAddress] = useState(null);
+            const [airdrops, setAirdrops] = useState(mockAirdrops);
+            const [showSuggestModal, setShowSuggestModal] = useState(false);
+            const [showQRModal, setShowQRModal] = useState(false);
+            const [loading, setLoading] = useState(false);
+            const [eligibilityResults, setEligibilityResults] = useState({});
+
+            // Connect Seeker Wallet
+            const connectSeeker = async () => {
+                try {
+                    if (window.solana?.isSeeker) {
+                        const response = await window.solana.connect();
+                        setConnectedWallet({
+                            type: 'seeker',
+                            address: response.publicKey.toString()
+                        });
+                        setActiveAddress(response.publicKey.toString());
+                        checkEligibility(response.publicKey.toString());
+                    } else {
+                        alert('Seeker Wallet not detected. Please install Seeker.');
+                    }
+                } catch (error) {
+                    console.error('Error connecting Seeker:', error);
+                    alert('Failed to connect Seeker Wallet');
+                }
+            };
+
+            // Connect Phantom Wallet
+            const connectPhantom = async () => {
+                try {
+                    if (window.solana?.isPhantom) {
+                        const response = await window.solana.connect();
+                        setConnectedWallet({
+                            type: 'phantom',
+                            address: response.publicKey.toString()
+                        });
+                        setActiveAddress(response.publicKey.toString());
+                        checkEligibility(response.publicKey.toString());
+                    } else {
+                        alert('Phantom Wallet not detected. Please install Phantom.');
+                    }
+                } catch (error) {
+                    console.error('Error connecting Phantom:', error);
+                    alert('Failed to connect Phantom Wallet');
+                }
+            };
+
+            // Check Manual Address
+            const checkManualAddress = () => {
+                if (manualAddress.length < 32) {
+                    alert('Please enter a valid Solana address');
+                    return;
+                }
+                setActiveAddress(manualAddress);
+                checkEligibility(manualAddress);
+            };
+
+            // Disconnect Wallet
+            const disconnect = () => {
+                setConnectedWallet(null);
+                setActiveAddress(null);
+                setManualAddress('');
+                setEligibilityResults({});
+            };
+
+            // Mock Eligibility Check - Replace with real logic
+            const checkEligibility = async (address) => {
+                setLoading(true);
+                
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                // Mock results - In production, check real on-chain data
+                const results = {};
+                airdrops.forEach(airdrop => {
+                    // Random eligibility for demo
+                    const random = Math.random();
+                    if (airdrop.status === 'upcoming') {
+                        results[airdrop.id] = 'pending';
+                    } else if (random > 0.5) {
+                        results[airdrop.id] = 'eligible';
+                    } else {
+                        results[airdrop.id] = 'not-eligible';
+                    }
+                });
+
+                setEligibilityResults(results);
+                setLoading(false);
+            };
+
+            // Send Tip
+            const sendTip = async (amount) => {
+                if (!connectedWallet) {
+                    alert('Please connect your wallet first');
+                    return;
+                }
+
+                try {
+                    const connection = new solanaWeb3.Connection('https://api.mainnet-beta.solana.com');
+                    const transaction = new solanaWeb3.Transaction().add(
+                        solanaWeb3.SystemProgram.transfer({
+                            fromPubkey: new solanaWeb3.PublicKey(connectedWallet.address),
+                            toPubkey: new solanaWeb3.PublicKey(BeX9myYpxHRA6x3wqriiA7e83yqbp4pCQFWHPQf1MW4a),
+                            lamports: amount * solanaWeb3.LAMPORTS_PER_SOL
+                        })
+                    );
+
+                    const { signature } = await window.solana.signAndSendTransaction(transaction);
+                    alert(`Thank you! Transaction: ${signature}`);
+                } catch (error) {
+                    console.error('Error sending tip:', error);
+                    alert('Failed to send tip');
+                }
+            };
+
+            return (
+                <>
+                    {/* Animated Background */}
+                    <div className="background-container">
+                        <div className="grid-overlay"></div>
+                        <div className="orb orb-1"></div>
+                        <div className="orb orb-2"></div>
+                    </div>
+
+                    {/* Main App */}
+                    <div className="app-container">
+                        {/* Header */}
+                        <header className="header">
+                            <h1 className="logo">AIRDROP CHECKER</h1>
+                            <p className="tagline">Discover your Solana airdrop eligibility</p>
+                        </header>
+
+                        {/* Connection Section */}
+                        <section className="connection-section">
+                            <h2 className="connection-title">Connect & Check</h2>
+                            
+                            {!activeAddress ? (
+                                <>
+                                    <div className="connection-buttons">
+                                        <button className="wallet-btn seeker" onClick={connectSeeker}>
+                                            Connect Seeker
+                                        </button>
+                                        <button className="wallet-btn phantom" onClick={connectPhantom}>
+                                            Connect Phantom
+                                        </button>
+                                    </div>
+
+                                    <div className="divider">OR</div>
+
+                                    <div className="manual-input-container">
+                                        <input
+                                            type="text"
+                                            className="manual-input"
+                                            placeholder="Enter Solana address..."
+                                            value={manualAddress}
+                                            onChange={(e) => setManualAddress(e.target.value)}
+                                        />
+                                        <button className="check-btn" onClick={checkManualAddress}>
+                                            Check
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="connected-wallet">
+                                    <div>
+                                        <div style={{fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '5px'}}>
+                                            {connectedWallet ? `Connected via ${connectedWallet.type}` : 'Manual Address'}
+                                        </div>
+                                        <div className="wallet-address">
+                                            {activeAddress.slice(0, 8)}...{activeAddress.slice(-8)}
+                                        </div>
+                                    </div>
+                                    <button className="disconnect-btn" onClick={disconnect}>
+                                        Disconnect
+                                    </button>
+                                </div>
+                            )}
+                        </section>
+
+                        {/* Airdrops Section */}
+                        <section className="airdrops-section">
+                            <div className="section-header">
+                                <h2 className="section-title">Available Airdrops</h2>
+                                <button className="suggest-btn" onClick={() => setShowSuggestModal(true)}>
+                                    + Suggest Airdrop
+                                </button>
+                            </div>
+
+                            {loading ? (
+                                <div className="loading">
+                                    <div className="spinner"></div>
+                                    <p>Checking eligibility...</p>
+                                </div>
+                            ) : airdrops.length === 0 ? (
+                                <div className="empty-state">
+                                    <div className="empty-icon">🔍</div>
+                                    <p>No airdrops available at the moment</p>
+                                </div>
+                            ) : (
+                                <div className="airdrops-grid">
+                                    {airdrops.map(airdrop => {
+                                        const eligibility = eligibilityResults[airdrop.id];
+                                        return (
+                                            <div key={airdrop.id} className="airdrop-card">
+                                                <div className="airdrop-header">
+                                                    <div className="airdrop-logo">{airdrop.logo}</div>
+                                                    <div className="airdrop-info">
+                                                        <h3 className="airdrop-name">{airdrop.project_name}</h3>
+                                                        <span className={`airdrop-status status-${airdrop.status}`}>
+                                                            {airdrop.status}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <p className="airdrop-description">{airdrop.description}</p>
+
+                                                {activeAddress && eligibility && (
+                                                    <div className={`eligibility-badge ${eligibility}`}>
+                                                        {eligibility === 'eligible' && '✅ Eligible'}
+                                                        {eligibility === 'not-eligible' && '❌ Not Eligible'}
+                                                        {eligibility === 'pending' && '⏳ Upcoming'}
+                                                    </div>
+                                                )}
+
+                                                <div className="airdrop-actions">
+                                                    <button
+                                                        className="action-btn claim-btn"
+                                                        disabled={!connectedWallet || eligibility !== 'eligible'}
+                                                        onClick={() => window.open(airdrop.claim_url, '_blank')}
+                                                    >
+                                                        {eligibility === 'eligible' ? 'Claim Now' : 'Claim'}
+                                                    </button>
+                                                    <button
+                                                        className="action-btn learn-btn"
+                                                        onClick={() => window.open(airdrop.website_url, '_blank')}
+                                                    >
+                                                        Learn More
+                                                    </button>
+                                                </div>
+
+                                                <div className="social-links">
+                                                    {airdrop.twitter_url && (
+                                                        <button
+                                                            className="social-btn"
+                                                            onClick={() => window.open(airdrop.twitter_url, '_blank')}
+                                                        >
+                                                            🐦 Twitter
+                                                        </button>
+                                                    )}
+                                                    {airdrop.discord_url && (
+                                                        <button
+                                                            className="social-btn"
+                                                            onClick={() => window.open(airdrop.discord_url, '_blank')}
+                                                        >
+                                                            💬 Discord
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </section>
+                    </div>
+
+                    {/* Suggest Modal */}
+                    {showSuggestModal && (
+                        <SuggestModal onClose={() => setShowSuggestModal(false)} />
+                    )}
+
+                    {/* QR Modal */}
+                    {showQRModal && (
+                        <QRModal onClose={() => setShowQRModal(false)} />
+                    )}
+
+                    {/* Footer */}
+                    <footer className="footer">
+                        <div className="footer-content">
+                            <div className="coffee-section">
+                                <span className="coffee-text">☕ Enjoying the app?</span>
+                                <div className="coffee-buttons">
+                                    {connectedWallet && (
+                                        <>
+                                            <button className="coffee-btn" onClick={() => sendTip(0.1)}>
+                                                0.1 SOL
+                                            </button>
+                                            <button className="coffee-btn" onClick={() => sendTip(0.5)}>
+                                                0.5 SOL
+                                            </button>
+                                            <button className="coffee-btn" onClick={() => sendTip(1)}>
+                                                1 SOL
+                                            </button>
+                                        </>
+                                    )}
+                                    <button className="coffee-btn qr-btn" onClick={() => setShowQRModal(true)}>
+                                        📱 QR Code
+                                    </button>
+                                </div>
+                            </div>
+                            <div style={{color: 'var(--text-muted)', fontSize: '0.8rem'}}>
+                                cryptoric89.skr
+                            </div>
+                        </div>
+                    </footer>
+                </>
+            );
+        }
+
+        // Suggest Modal Component
+        function SuggestModal({ onClose }) {
+            const [formData, setFormData] = useState({
+                projectName: '',
+                description: '',
+                officialLink: '',
+                email: '',
+                criteria: ''
+            });
+
+            // APRÈS (avec EmailJS activé) :
+const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+        // 1. Sauvegarder dans Supabase
+        await supabase.from('airdrop_suggestions').insert([{
+            project_name: formData.projectName,
+            description: formData.description,
+            official_link: formData.officialLink,
+            user_email: formData.email,
+            criteria_notes: formData.criteria
+        }]);
+        
+        // 2. Envoyer email de notification
+        await emailjs.send(
+            service_zyp8xav,      // ← Remplace ici
+            template_jo7beih,     // ← Remplace ici
+            {
+                project_name: formData.projectName,
+                description: formData.description,
+                official_link: formData.officialLink,
+                user_email: formData.email,
+                criteria_notes: formData.criteria,
+                to_email: lari.drums@gmail.com  // ← Ton email pour recevoir les notifications
+            },
+            PxzH8kE8rlp0EfDsk        // ← Remplace ici
+        );
+        
+        alert('✅ Merci ! Votre suggestion a été envoyée.');
+        onClose();
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('❌ Erreur lors de l\'envoi.');
+    }
+};
+
+            return (
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="modal-header">Suggest an Airdrop</h2>
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label className="form-label">Project Name *</label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    required
+                                    value={formData.projectName}
+                                    onChange={(e) => setFormData({...formData, projectName: e.target.value})}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Description *</label>
+                                <textarea
+                                    className="form-textarea"
+                                    required
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Official Link *</label>
+                                <input
+                                    type="url"
+                                    className="form-input"
+                                    required
+                                    value={formData.officialLink}
+                                    onChange={(e) => setFormData({...formData, officialLink: e.target.value})}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Your Email (optional)</label>
+                                <input
+                                    type="email"
+                                    className="form-input"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Eligibility Criteria (if known)</label>
+                                <textarea
+                                    className="form-textarea"
+                                    value={formData.criteria}
+                                    onChange={(e) => setFormData({...formData, criteria: e.target.value})}
+                                />
+                            </div>
+                            <div className="modal-actions">
+                                <button type="submit" className="submit-btn">Submit</button>
+                                <button type="button" className="cancel-btn" onClick={onClose}>Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        // QR Modal Component
+        function QRModal({ onClose }) {
+            const address = "cryptoric89.skr";
+            
+            const copyAddress = () => {
+                navigator.clipboard.writeText(address);
+                alert('Address copied to clipboard!');
+            };
+
+            return (
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="modal-header">Send a Tip</h2>
+                        <div style={{textAlign: 'center'}}>
+                            <div style={{
+                                background: 'white',
+                                padding: '20px',
+                                borderRadius: '16px',
+                                marginBottom: '20px',
+                                display: 'inline-block'
+                            }}>
+                                {/* QR Code placeholder - In production, use a QR code library */}
+                                <div style={{
+                                    width: '200px',
+                                    height: '200px',
+                                    background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                                    borderRadius: '12px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '3rem'
+                                }}>
+                                    📱
+                                </div>
+                            </div>
+                            <div style={{
+                                background: 'var(--dark-lighter)',
+                                padding: '15px',
+                                borderRadius: '12px',
+                                marginBottom: '20px',
+                                wordBreak: 'break-all',
+                                fontFamily: 'JetBrains Mono',
+                                fontSize: '0.9rem'
+                            }}>
+                                {address}
+                            </div>
+                            <button className="submit-btn" onClick={copyAddress} style={{width: '100%'}}>
+                                Copy Address
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Render App
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
