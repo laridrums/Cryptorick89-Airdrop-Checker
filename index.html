@@ -956,30 +956,86 @@
                 setLoading(false);
             };
 
-            // Send Tip
             const sendTip = async (amount) => {
-                if (!connectedWallet) {
-                    alert('Please connect your wallet first');
-                    return;
-                }
+    // Vérifications améliorées
+    if (!connectedWallet) {
+        alert('Please connect your wallet first');
+        return;
+    }
 
-                try {
-                    const connection = new solanaWeb3.Connection('https://api.mainnet-beta.solana.com');
-                    const transaction = new solanaWeb3.Transaction().add(
-                        solanaWeb3.SystemProgram.transfer({
-                            fromPubkey: new solanaWeb3.PublicKey(connectedWallet.address),
-                            toPubkey: new solanaWeb3.PublicKey('BeX9myYpxHRA6x3wqriiA7e83yqbp4pCQFWHPQf1MW4a'),
-                            lamports: amount * solanaWeb3.LAMPORTS_PER_SOL
-                        })
-                    );
+    if (!window.solana || !window.solana.isConnected) {
+        alert('Wallet not properly connected. Please reconnect.');
+        return;
+    }
 
-                    const { signature } = await window.solana.signAndSendTransaction(transaction);
-                    alert(`Thank you! Transaction: ${signature}`);
-                } catch (error) {
-                    console.error('Error sending tip:', error);
-                    alert('Failed to send tip');
-                }
-            };
+    try {
+        console.log('Starting tip transaction...');
+        console.log('From:', connectedWallet.address);
+        console.log('Amount:', amount, 'SOL');
+
+        const connection = new solanaWeb3.Connection(
+            'https://api.mainnet-beta.solana.com',
+            { commitment: 'confirmed' }
+        );
+
+        // Vérifier le solde
+        const fromPubkey = new solanaWeb3.PublicKey(connectedWallet.address);
+        const balance = await connection.getBalance(fromPubkey);
+        const balanceInSol = balance / solanaWeb3.LAMPORTS_PER_SOL;
+        
+        console.log('Current balance:', balanceInSol, 'SOL');
+
+        if (balanceInSol < amount + 0.001) { // +0.001 pour les frais
+            alert(`Insufficient balance. You need at least ${amount + 0.001} SOL`);
+            return;
+        }
+
+        // Créer la transaction
+        const transaction = new solanaWeb3.Transaction().add(
+            solanaWeb3.SystemProgram.transfer({
+                fromPubkey: fromPubkey,
+                toPubkey: new solanaWeb3.PublicKey('BeX9myYpxHRA6x3wqriiA7e83yqbp4pCQFWHPQf1MW4a'),
+                lamports: amount * solanaWeb3.LAMPORTS_PER_SOL
+            })
+        );
+
+        // Obtenir le blockhash récent
+        const { blockhash } = await connection.getLatestBlockhash('finalized');
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = fromPubkey;
+
+        console.log('Transaction created, waiting for signature...');
+
+        // Signer et envoyer
+        const signedTransaction = await window.solana.signTransaction(transaction);
+        const signature = await connection.sendRawTransaction(signedTransaction.serialize());
+
+        console.log('Transaction sent:', signature);
+        console.log('Waiting for confirmation...');
+
+        // Attendre la confirmation
+        await connection.confirmTransaction(signature, 'confirmed');
+
+        alert(`✅ Thank you! Transaction confirmed: ${signature.slice(0, 8)}...`);
+        
+        // Optionnel : ouvrir dans Solscan
+        window.open(`https://solscan.io/tx/${signature}`, '_blank');
+
+    } catch (error) {
+        console.error('Error sending tip:', error);
+        
+        // Messages d'erreur plus clairs
+        if (error.message.includes('User rejected')) {
+            alert('Transaction cancelled by user.');
+        } else if (error.message.includes('insufficient')) {
+            alert('Insufficient SOL balance.');
+        } else if (error.message.includes('blockhash')) {
+            alert('Network error. Please try again.');
+        } else {
+            alert(`Failed to send tip: ${error.message}`);
+        }
+    }
+};
 
             return (
                 <>
