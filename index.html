@@ -1054,7 +1054,32 @@
         alert(errorMessage);
     }
 };
-
+const sendCustomTip = () => {
+    const amount = prompt('Enter amount in SOL (min: 0.001):');
+    
+    if (amount === null) {
+        return;
+    }
+    
+    const parsedAmount = parseFloat(amount);
+    
+    if (isNaN(parsedAmount)) {
+        alert('❌ Invalid amount. Please enter a number.');
+        return;
+    }
+    
+    if (parsedAmount < 0.001) {
+        alert('❌ Minimum amount is 0.001 SOL');
+        return;
+    }
+    
+    if (parsedAmount > 100) {
+        alert('⚠️ Are you sure? That\'s a lot! Maximum is 100 SOL.');
+        return;
+    }
+    
+    sendTip(parsedAmount);
+};
             return (
                 <>
                     <div className="background-container">
