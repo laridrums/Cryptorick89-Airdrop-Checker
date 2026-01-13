@@ -962,45 +962,97 @@
         return;
     }
 
+    if (!window.solana || !window.solana.isConnected) {
+        alert('Wallet not connected properly. Please reconnect.');
+        return;
+    }
+
     try {
-        // HELIUS RPC (gratuit et plus fiable)
+        console.log('💰 Starting tip transaction...');
+        console.log('Amount:', amount, 'SOL');
+        console.log('From:', connectedWallet.address);
+
+        // RPC fiable (Helius gratuit)
         const connection = new solanaWeb3.Connection(
             'https://mainnet.helius-rpc.com/?api-key=28166a77-28f8-40f8-a33e-a810059c01eb',
-            'confirmed'
+            {
+                commitment: 'confirmed',
+                confirmTransactionInitialTimeout: 60000
+            }
         );
 
         const fromPubkey = new solanaWeb3.PublicKey(connectedWallet.address);
         const toPubkey = new solanaWeb3.PublicKey('BeX9myYpxHRA6x3wqriiA7e83yqbp4pCQFWHPQf1MW4a');
+
+        // Vérifier le solde (optionnel mais utile)
+        try {
+            const balance = await connection.getBalance(fromPubkey);
+            const balanceInSol = balance / solanaWeb3.LAMPORTS_PER_SOL;
+            console.log('💎 Balance:', balanceInSol, 'SOL');
+
+            if (balanceInSol < amount + 0.00001) {
+                alert(`Insufficient balance. You need at least ${amount} SOL + fees.`);
+                return;
+            }
+        } catch (balanceError) {
+            console.warn('Could not check balance, continuing anyway:', balanceError);
+        }
 
         // Créer la transaction
         const transaction = new solanaWeb3.Transaction().add(
             solanaWeb3.SystemProgram.transfer({
                 fromPubkey: fromPubkey,
                 toPubkey: toPubkey,
-                lamports: amount * solanaWeb3.LAMPORTS_PER_SOL
+                lamports: Math.floor(amount * solanaWeb3.LAMPORTS_PER_SOL)
             })
         );
 
-        // Obtenir un blockhash récent
+        // Obtenir blockhash récent
+        console.log('🔗 Getting recent blockhash...');
         const { blockhash } = await connection.getLatestBlockhash('finalized');
         transaction.recentBlockhash = blockhash;
         transaction.feePayer = fromPubkey;
 
-        console.log('Sending transaction...');
+        console.log('✍️ Requesting signature from wallet...');
 
         // Signer et envoyer via Phantom
         const { signature } = await window.solana.signAndSendTransaction(transaction);
 
-        console.log('Transaction sent:', signature);
+        console.log('📤 Transaction sent! Signature:', signature);
+        console.log('⏳ Waiting for confirmation...');
 
         // Attendre confirmation
-        await connection.confirmTransaction(signature, 'confirmed');
+        const confirmation = await connection.confirmTransaction(signature, 'confirmed');
 
-        alert(`✅ Thank you! Transaction: ${signature.slice(0, 8)}...`);
+        if (confirmation.value.err) {
+            throw new Error('Transaction failed: ' + JSON.stringify(confirmation.value.err));
+        }
+
+        console.log('✅ Transaction confirmed!');
+
+        // Message de succès
+        alert(`✅ Thank you for your support!\n\nTransaction: ${signature.slice(0, 8)}...${signature.slice(-8)}`);
+
+        // Optionnel : ouvrir dans Solscan
+        // window.open(`https://solscan.io/tx/${signature}`, '_blank');
 
     } catch (error) {
-        console.error('Error sending tip:', error);
-        alert('Failed to send tip: ' + error.message);
+        console.error('❌ Error sending tip:', error);
+
+        // Messages d'erreur personnalisés
+        let errorMessage = 'Failed to send tip.';
+
+        if (error.message.includes('User rejected')) {
+            errorMessage = 'Transaction cancelled.';
+        } else if (error.message.includes('insufficient')) {
+            errorMessage = 'Insufficient SOL balance.';
+        } else if (error.message.includes('403') || error.message.includes('Forbidden')) {
+            errorMessage = 'Network error. Please try again.';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+
+        alert(errorMessage);
     }
 };
 
